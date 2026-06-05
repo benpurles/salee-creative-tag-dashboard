@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Salee Creative Tag Dashboard</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Salee Hair Co</p>
+        <h1>Creative Tag Dashboard</h1>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-button" id="resetButton" type="button" aria-label="Reset filters" title="Reset filters">Reset</button>
+        <a class="text-button" href="./assets/data.js" target="_blank" rel="noreferrer">Data</a>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary-band" aria-label="Dashboard totals">
+        <div class="summary-copy">
+          <h2>Collapsed by duplicate creative, measured by tag.</h2>
+          <p id="summaryText"></p>
+        </div>
+        <div class="metric-strip" id="metricStrip"></div>
+      </section>
+
+      <section class="workspace">
+        <aside class="filters" aria-label="Filters">
+          <div class="filter-block">
+            <label for="searchInput">Search ads or tags</label>
+            <input id="searchInput" type="search" placeholder="Founder, dupe 2, wax stick..." />
+          </div>
+
+          <div class="filter-block">
+            <div class="filter-label">Tag logic</div>
+            <div class="segmented" role="group" aria-label="Tag matching mode">
+              <button class="segment active" type="button" data-mode="all">All</button>
+              <button class="segment" type="button" data-mode="any">Any</button>
+            </div>
+          </div>
+
+          <div class="filter-block">
+            <div class="filter-row">
+              <div class="filter-label">Tags</div>
+              <button class="small-button" type="button" id="clearTagsButton">Clear</button>
+            </div>
+            <div class="tag-list" id="tagList"></div>
+          </div>
+        </aside>
+
+        <section class="analysis">
+          <nav class="tabs" aria-label="Analysis tabs">
+            <button class="tab active" type="button" data-tab="creatives">Creatives</button>
+            <button class="tab" type="button" data-tab="tags">Tag rollup</button>
+            <button class="tab" type="button" data-tab="combos">Combinations</button>
+            <button class="tab" type="button" data-tab="guide">Guide</button>
+          </nav>
+
+          <section class="panel active" id="creativesPanel">
+            <div class="panel-head">
+              <div>
+                <h2>Creative Rows</h2>
+                <p>Duplicate tags are collapsed into a single creative with summed spend, revenue, and purchases.</p>
+              </div>
+              <select id="creativeSort" aria-label="Sort creative rows">
+                <option value="spend_desc">Spend</option>
+                <option value="roas_desc">ROAS</option>
+                <option value="cac_asc">CAC</option>
+                <option value="purchases_desc">Purchases</option>
+                <option value="aov_desc">AOV</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Preview</th>
+                    <th>Creative</th>
+                    <th>Tags</th>
+                    <th class="num">Spend</th>
+                    <th class="num">Purchases</th>
+                    <th class="num">CAC</th>
+                    <th class="num">ROAS</th>
+                    <th class="num">AOV</th>
+                    <th class="num">ATC</th>
+                  </tr>
+                </thead>
+                <tbody id="creativeTable"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel" id="tagsPanel">
+            <div class="panel-head">
+              <div>
+                <h2>Individual Tag Performance</h2>
+                <p>Every row represents creatives containing that tag inside the current filter context.</p>
+              </div>
+              <select id="tagSort" aria-label="Sort tag rows">
+                <option value="spend_desc">Spend</option>
+                <option value="roas_desc">ROAS</option>
+                <option value="cac_asc">CAC</option>
+                <option value="purchases_desc">Purchases</option>
+                <option value="creative_count_desc">Creative count</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tag</th>
+                    <th>Category</th>
+                    <th class="num">Creatives</th>
+                    <th class="num">Spend</th>
+                    <th class="num">Purchases</th>
+                    <th class="num">CAC</th>
+                    <th class="num">ROAS</th>
+                    <th class="num">AOV</th>
+                  </tr>
+                </thead>
+                <tbody id="tagTable"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel" id="combosPanel">
+            <div class="panel-head">
+              <div>
+                <h2>Tag Combinations</h2>
+                <p>Pairs of tags that show up together, aggregated across collapsed creatives.</p>
+              </div>
+              <select id="comboSort" aria-label="Sort combination rows">
+                <option value="spend_desc">Spend</option>
+                <option value="roas_desc">ROAS</option>
+                <option value="cac_asc">CAC</option>
+                <option value="purchases_desc">Purchases</option>
+                <option value="creative_count_desc">Creative count</option>
+              </select>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Combination</th>
+                    <th class="num">Creatives</th>
+                    <th class="num">Spend</th>
+                    <th class="num">Purchases</th>
+                    <th class="num">CAC</th>
+                    <th class="num">ROAS</th>
+                    <th class="num">AOV</th>
+                  </tr>
+                </thead>
+                <tbody id="comboTable"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel" id="guidePanel">
+            <div class="panel-head">
+              <div>
+                <h2>Tag Guide</h2>
+                <p>Manual categories from the CSV guide, normalized where spelling differed.</p>
+              </div>
+            </div>
+            <div class="guide-grid" id="guideGrid"></div>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <div class="lightbox" id="lightbox" aria-hidden="true">
+      <button class="lightbox-close" type="button" aria-label="Close preview">Close</button>
+      <img id="lightboxImage" alt="Creative preview" />
+    </div>
+
+    <script src="./assets/data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
