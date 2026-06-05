@@ -244,9 +244,9 @@ function previewStrip(creatives, limit = 10) {
   const remainder = withPreviews.length - visible.length;
   if (!withPreviews.length) return `<div class="creative-sub">No previews</div>`;
   return `
-    <div class="preview-strip">
+    <div class="preview-strip" style="${state.showTagPreviews ? "display:grid" : ""}">
       ${visible.map((creative) => `
-        <button class="preview-mini" type="button" data-preview="${escapeHtml(creative.previewImage)}" title="${escapeHtml(creativeTitle(creative))}">
+        <button class="preview-mini" type="button" data-preview="${escapeHtml(creative.previewImage)}" data-hover-preview="${escapeHtml(creative.previewImage)}" title="${escapeHtml(creativeTitle(creative))}">
           <img src="${escapeHtml(creative.previewImage)}" alt="Preview for ${escapeHtml(creativeTitle(creative))}" loading="lazy" />
         </button>
       `).join("")}
@@ -265,7 +265,7 @@ function renderTagTable(creatives) {
     <tr>
       <td><strong>${escapeHtml(row.tag)}</strong></td>
       <td>${escapeHtml(row.category)}</td>
-      <td class="tag-previews-col">${previewStrip(row.creatives)}</td>
+      <td class="tag-previews-col">${state.showTagPreviews ? previewStrip(row.creatives) : ""}</td>
       <td class="num">${int(row.creativeCount)}</td>
       <td class="num">${usd(row.spend)}</td>
       <td class="num">${int(row.purchases)}</td>
@@ -388,6 +388,35 @@ document.addEventListener("click", (event) => {
     document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
     document.querySelector(`#${state.tab}Panel`).classList.add("active");
   }
+});
+
+const hoverPreview = document.createElement("div");
+hoverPreview.className = "hover-preview";
+hoverPreview.innerHTML = `<img alt="Creative hover preview" />`;
+document.body.appendChild(hoverPreview);
+const hoverPreviewImage = hoverPreview.querySelector("img");
+
+document.addEventListener("mouseover", (event) => {
+  const target = event.target.closest("[data-hover-preview]");
+  if (!target) return;
+  hoverPreviewImage.src = target.dataset.hoverPreview;
+  hoverPreview.classList.add("open");
+});
+
+document.addEventListener("mousemove", (event) => {
+  if (!hoverPreview.classList.contains("open")) return;
+  const padding = 18;
+  const width = 260;
+  const height = 462;
+  const left = Math.min(event.clientX + padding, window.innerWidth - width - padding);
+  const top = Math.min(event.clientY + padding, window.innerHeight - height - padding);
+  hoverPreview.style.transform = `translate(${Math.max(padding, left)}px, ${Math.max(padding, top)}px)`;
+});
+
+document.addEventListener("mouseout", (event) => {
+  if (!event.target.closest("[data-hover-preview]")) return;
+  hoverPreview.classList.remove("open");
+  hoverPreviewImage.removeAttribute("src");
 });
 
 document.addEventListener("keydown", (event) => {
