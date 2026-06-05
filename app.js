@@ -8,6 +8,7 @@ const state = {
   creativeSort: "spend_desc",
   tagSort: "spend_desc",
   comboSort: "spend_desc",
+  showTagPreviews: localStorage.getItem("saleeShowTagPreviews") === "true",
   titles: JSON.parse(localStorage.getItem("saleeCreativeTitles") || "{}"),
 };
 
@@ -20,6 +21,7 @@ const els = {
   resetButton: document.querySelector("#resetButton"),
   creativeSort: document.querySelector("#creativeSort"),
   tagSort: document.querySelector("#tagSort"),
+  tagPreviewToggle: document.querySelector("#tagPreviewToggle"),
   comboSort: document.querySelector("#comboSort"),
   creativeTable: document.querySelector("#creativeTable"),
   tagTable: document.querySelector("#tagTable"),
@@ -230,21 +232,40 @@ function tagRollups(creatives) {
     return {
       tag,
       category,
+      creatives: matching,
       ...aggregate(matching),
     };
   }).filter((row) => row.creativeCount > 0);
 }
 
+function previewStrip(creatives, limit = 10) {
+  const withPreviews = creatives.filter((creative) => creative.previewImage);
+  const visible = withPreviews.slice(0, limit);
+  const remainder = withPreviews.length - visible.length;
+  if (!withPreviews.length) return `<div class="creative-sub">No previews</div>`;
+  return `
+    <div class="preview-strip">
+      ${visible.map((creative) => `
+        <button class="preview-mini" type="button" data-preview="${escapeHtml(creative.previewImage)}" title="${escapeHtml(creativeTitle(creative))}">
+          <img src="${escapeHtml(creative.previewImage)}" alt="Preview for ${escapeHtml(creativeTitle(creative))}" loading="lazy" />
+        </button>
+      `).join("")}
+      ${remainder > 0 ? `<div class="preview-mini-more">+${remainder}</div>` : ""}
+    </div>
+  `;
+}
+
 function renderTagTable(creatives) {
   const rows = sortRows(tagRollups(creatives), state.tagSort);
   if (!rows.length) {
-    els.tagTable.innerHTML = `<tr><td class="empty" colspan="8">No tags match the current filters.</td></tr>`;
+    els.tagTable.innerHTML = `<tr><td class="empty" colspan="9">No tags match the current filters.</td></tr>`;
     return;
   }
   els.tagTable.innerHTML = rows.map((row) => `
     <tr>
       <td><strong>${escapeHtml(row.tag)}</strong></td>
       <td>${escapeHtml(row.category)}</td>
+      <td class="tag-previews-col">${previewStrip(row.creatives)}</td>
       <td class="num">${int(row.creativeCount)}</td>
       <td class="num">${usd(row.spend)}</td>
       <td class="num">${int(row.purchases)}</td>
@@ -302,6 +323,8 @@ function renderGuide() {
 
 function render() {
   const creatives = filteredCreatives();
+  document.body.classList.toggle("show-tag-previews", state.showTagPreviews);
+  els.tagPreviewToggle.checked = state.showTagPreviews;
   renderSummary(creatives);
   renderTags();
   renderCreativeTable(creatives);
@@ -401,6 +424,12 @@ els.creativeSort.addEventListener("change", (event) => {
 
 els.tagSort.addEventListener("change", (event) => {
   state.tagSort = event.target.value;
+  render();
+});
+
+els.tagPreviewToggle.addEventListener("change", (event) => {
+  state.showTagPreviews = event.target.checked;
+  localStorage.setItem("saleeShowTagPreviews", String(state.showTagPreviews));
   render();
 });
 

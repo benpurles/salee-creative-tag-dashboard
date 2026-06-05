@@ -99,13 +99,19 @@
                 <h2>Individual Tag Performance</h2>
                 <p>Every row represents creatives containing that tag inside the current filter context.</p>
               </div>
-              <select id="tagSort" aria-label="Sort tag rows">
-                <option value="spend_desc">Spend</option>
-                <option value="roas_desc">ROAS</option>
-                <option value="cac_asc">CAC</option>
-                <option value="purchases_desc">Purchases</option>
-                <option value="creative_count_desc">Creative count</option>
-              </select>
+              <div class="panel-controls">
+                <label class="toggle-control">
+                  <input id="tagPreviewToggle" type="checkbox" />
+                  <span>Show previews</span>
+                </label>
+                <select id="tagSort" aria-label="Sort tag rows">
+                  <option value="spend_desc">Spend</option>
+                  <option value="roas_desc">ROAS</option>
+                  <option value="cac_asc">CAC</option>
+                  <option value="purchases_desc">Purchases</option>
+                  <option value="creative_count_desc">Creative count</option>
+                </select>
+              </div>
             </div>
             <div class="table-wrap">
               <table>
@@ -113,6 +119,7 @@
                   <tr>
                     <th>Tag</th>
                     <th>Category</th>
+                    <th class="tag-previews-col">Previews</th>
                     <th class="num">Creatives</th>
                     <th class="num">Spend</th>
                     <th class="num">Purchases</th>
