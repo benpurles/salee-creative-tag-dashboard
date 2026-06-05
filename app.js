@@ -2,6 +2,7 @@ const DATA = window.SALEE_DASHBOARD_DATA;
 
 const state = {
   selectedTags: new Set(),
+  selectedScoreBands: new Set(),
   mode: "all",
   tab: "creatives",
   search: "",
@@ -16,8 +17,10 @@ const els = {
   summaryText: document.querySelector("#summaryText"),
   metricStrip: document.querySelector("#metricStrip"),
   tagList: document.querySelector("#tagList"),
+  scoreFilterList: document.querySelector("#scoreFilterList"),
   searchInput: document.querySelector("#searchInput"),
   clearTagsButton: document.querySelector("#clearTagsButton"),
+  clearScoreButton: document.querySelector("#clearScoreButton"),
   resetButton: document.querySelector("#resetButton"),
   creativeSort: document.querySelector("#creativeSort"),
   tagSort: document.querySelector("#tagSort"),
@@ -100,6 +103,13 @@ function buildCreativeScores(creatives) {
 
 const CREATIVE_SCORES = buildCreativeScores(DATA.creatives);
 
+const SCORE_BANDS = [
+  { key: "elite", label: "Elite", range: "80+", min: 80, max: Infinity },
+  { key: "strong", label: "Strong", range: "70-79", min: 70, max: 80 },
+  { key: "solid", label: "Solid", range: "50-69", min: 50, max: 70 },
+  { key: "thin", label: "Thin", range: "<50", min: -Infinity, max: 50 },
+];
+
 function enrichCreative(creative) {
   return {
     ...creative,
@@ -109,9 +119,13 @@ function enrichCreative(creative) {
 
 function scoreLabel(score) {
   if (score >= 80) return "Elite";
-  if (score >= 65) return "Strong";
+  if (score >= 70) return "Strong";
   if (score >= 50) return "Watch";
   return "Thin";
+}
+
+function scoreBandKey(score) {
+  return SCORE_BANDS.find((band) => score >= band.min && score < band.max)?.key || "thin";
 }
 
 function aggregate(items) {
@@ -188,8 +202,14 @@ function matchesTags(creative) {
   return [...state.selectedTags].every((tag) => tagSet.has(tag));
 }
 
+function matchesScore(creative) {
+  if (!state.selectedScoreBands.size) return true;
+  const score = CREATIVE_SCORES[creative.key]?.score ?? 0;
+  return state.selectedScoreBands.has(scoreBandKey(score));
+}
+
 function filteredCreatives() {
-  return DATA.creatives.filter((creative) => matchesSearch(creative) && matchesTags(creative));
+  return DATA.creatives.filter((creative) => matchesSearch(creative) && matchesTags(creative) && matchesScore(creative));
 }
 
 function metricCard(label, value, sub = "") {
@@ -230,6 +250,23 @@ function renderTags() {
         `).join("")}
       </div>
     </div>
+  `).join("");
+}
+
+function renderScoreFilters() {
+  const counts = Object.fromEntries(SCORE_BANDS.map((band) => [band.key, 0]));
+  for (const creative of DATA.creatives) {
+    const score = CREATIVE_SCORES[creative.key]?.score ?? 0;
+    counts[scoreBandKey(score)] += 1;
+  }
+  els.scoreFilterList.innerHTML = SCORE_BANDS.map((band) => `
+    <button class="score-filter ${state.selectedScoreBands.has(band.key) ? "active" : ""}" type="button" data-score-band="${band.key}">
+      <span>
+        <strong>${escapeHtml(band.label)}</strong>
+        <em>${escapeHtml(band.range)}</em>
+      </span>
+      <b>${counts[band.key]}</b>
+    </button>
   `).join("");
 }
 
@@ -376,6 +413,7 @@ function render() {
   document.body.classList.toggle("show-tag-previews", state.showTagPreviews);
   els.tagPreviewToggle.checked = state.showTagPreviews;
   renderSummary(creatives);
+  renderScoreFilters();
   renderTags();
   renderCreativeTable(creatives);
   renderTagTable(creatives);
@@ -389,6 +427,15 @@ document.addEventListener("click", (event) => {
     els.lightboxImage.src = preview.dataset.preview;
     els.lightbox.classList.add("open");
     els.lightbox.setAttribute("aria-hidden", "false");
+    return;
+  }
+
+  const scoreBand = event.target.closest("[data-score-band]");
+  if (scoreBand) {
+    const key = scoreBand.dataset.scoreBand;
+    if (state.selectedScoreBands.has(key)) state.selectedScoreBands.delete(key);
+    else state.selectedScoreBands.add(key);
+    render();
     return;
   }
 
@@ -487,8 +534,14 @@ els.clearTagsButton.addEventListener("click", () => {
   render();
 });
 
+els.clearScoreButton.addEventListener("click", () => {
+  state.selectedScoreBands.clear();
+  render();
+});
+
 els.resetButton.addEventListener("click", () => {
   state.selectedTags.clear();
+  state.selectedScoreBands.clear();
   state.search = "";
   state.mode = "all";
   els.searchInput.value = "";

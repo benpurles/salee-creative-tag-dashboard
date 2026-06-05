@@ -269,6 +269,63 @@ select:focus {
   gap: 7px;
 }
 
+.score-filter-list {
+  display: grid;
+  gap: 7px;
+}
+
+.score-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.score-filter:hover {
+  border-color: var(--accent);
+}
+
+.score-filter.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.score-filter span {
+  display: grid;
+  gap: 2px;
+}
+
+.score-filter strong {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.score-filter em {
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 750;
+}
+
+.score-filter b {
+  display: inline-grid;
+  min-width: 26px;
+  height: 24px;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-dark);
+  font-size: 12px;
+}
+
 .tag-chip {
   padding: 7px 9px;
   border: 1px solid var(--line);
