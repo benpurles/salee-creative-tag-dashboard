@@ -63,9 +63,10 @@
             <div class="panel-head">
               <div>
                 <h2>Creative Rows</h2>
-                <p>Duplicate tags are collapsed into a single creative with summed spend, revenue, and purchases.</p>
+                <p>Creative Score = 45% spend proof, 30% CAC efficiency, 25% ROAS efficiency.</p>
               </div>
               <select id="creativeSort" aria-label="Sort creative rows">
+                <option value="score_desc">Creative score</option>
                 <option value="spend_desc">Spend</option>
                 <option value="roas_desc">ROAS</option>
                 <option value="cac_asc">CAC</option>
@@ -80,6 +81,7 @@
                     <th>Preview</th>
                     <th>Creative</th>
                     <th>Tags</th>
+                    <th class="num">Score</th>
                     <th class="num">Spend</th>
                     <th class="num">Purchases</th>
                     <th class="num">CAC</th>

@@ -5,7 +5,7 @@ const state = {
   mode: "all",
   tab: "creatives",
   search: "",
-  creativeSort: "spend_desc",
+  creativeSort: "score_desc",
   tagSort: "spend_desc",
   comboSort: "spend_desc",
   showTagPreviews: localStorage.getItem("saleeShowTagPreviews") === "true",
@@ -71,6 +71,49 @@ function creativeTitle(creative) {
   return state.titles[creative.key] || creative.label;
 }
 
+function percentile(values, value, higherIsBetter = true) {
+  const usable = values.filter((item) => Number.isFinite(item));
+  if (!usable.length || !Number.isFinite(value)) return 0;
+  const wins = higherIsBetter
+    ? usable.filter((item) => item <= value).length
+    : usable.filter((item) => item >= value).length;
+  return (wins / usable.length) * 100;
+}
+
+function buildCreativeScores(creatives) {
+  const spendValues = creatives.map((creative) => Math.log1p(creative.spend));
+  const cacValues = creatives.map((creative) => creative.cac).filter((value) => value > 0);
+  const roasValues = creatives.map((creative) => creative.roas);
+  return Object.fromEntries(creatives.map((creative) => {
+    const spendProof = percentile(spendValues, Math.log1p(creative.spend), true);
+    const cacEfficiency = percentile(cacValues, creative.cac, false);
+    const roasEfficiency = percentile(roasValues, creative.roas, true);
+    const score = (spendProof * 0.45) + (cacEfficiency * 0.30) + (roasEfficiency * 0.25);
+    return [creative.key, {
+      score,
+      spendProof,
+      cacEfficiency,
+      roasEfficiency,
+    }];
+  }));
+}
+
+const CREATIVE_SCORES = buildCreativeScores(DATA.creatives);
+
+function enrichCreative(creative) {
+  return {
+    ...creative,
+    ...(CREATIVE_SCORES[creative.key] || { score: 0, spendProof: 0, cacEfficiency: 0, roasEfficiency: 0 }),
+  };
+}
+
+function scoreLabel(score) {
+  if (score >= 80) return "Elite";
+  if (score >= 65) return "Strong";
+  if (score >= 50) return "Watch";
+  return "Thin";
+}
+
 function aggregate(items) {
   const spend = items.reduce((sum, item) => sum + item.spend, 0);
   const purchases = items.reduce((sum, item) => sum + item.purchases, 0);
@@ -107,6 +150,7 @@ function sortRows(rows, sortKey) {
     purchases: "purchases",
     aov: "aov",
     creative_count: "creativeCount",
+    score: "score",
   };
   const key = keyMap[metric] || "spend";
   const dir = direction === "asc" ? 1 : -1;
@@ -190,9 +234,9 @@ function renderTags() {
 }
 
 function renderCreativeTable(creatives) {
-  const rows = sortRows(creatives, state.creativeSort);
+  const rows = sortRows(creatives.map(enrichCreative), state.creativeSort);
   if (!rows.length) {
-    els.creativeTable.innerHTML = `<tr><td class="empty" colspan="9">No creatives match the current filters.</td></tr>`;
+    els.creativeTable.innerHTML = `<tr><td class="empty" colspan="10">No creatives match the current filters.</td></tr>`;
     return;
   }
   els.creativeTable.innerHTML = rows.map((creative) => `
@@ -216,6 +260,12 @@ function renderCreativeTable(creatives) {
         ${creative.collapsed ? `<div class="creative-sub">${escapeHtml(creative.adNames.join(" / "))}</div>` : ""}
       </td>
       <td><div class="tags-cell">${creative.tags.map((tag) => `<span class="mini-tag">${escapeHtml(tag)}</span>`).join("")}</div></td>
+      <td class="num">
+        <div class="score-pill" title="Spend proof ${decimal(creative.spendProof, 0)} / CAC efficiency ${decimal(creative.cacEfficiency, 0)} / ROAS efficiency ${decimal(creative.roasEfficiency, 0)}">
+          <strong>${decimal(creative.score, 0)}</strong>
+          <span>${scoreLabel(creative.score)}</span>
+        </div>
+      </td>
       <td class="num">${usd(creative.spend)}</td>
       <td class="num">${int(creative.purchases)}</td>
       <td class="num">${usd(creative.cac, 2)}</td>
